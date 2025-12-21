@@ -19,8 +19,11 @@ const yomogi = Yomogi({
 });
 
 export const metadata: Metadata = {
-  title: "Point Donation Box",
-  description: "Donate points to support the project.",
+  title: "Boqin箱",
+  description: "こぴあください",
+  icons: {
+    icon: "https://q.trap.jp/api/v3/public/icon/howard127",
+  },
 };
 
 export default function RootLayout({
