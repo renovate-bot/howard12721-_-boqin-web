@@ -1,5 +1,20 @@
 import { NextResponse } from 'next/server';
 
+const readJsonResponse = async (response: Response) => {
+    const contentType = response.headers.get('content-type') || '';
+
+    if (contentType.includes('application/json')) {
+        return response.json();
+    }
+
+    const body = await response.text();
+    return {
+        message: 'Upstream returned a non-JSON response',
+        contentType,
+        body: body.slice(0, 500),
+    };
+};
+
 export async function GET() {
     try {
         const pteronToken = process.env.PTERON_TOKEN;
@@ -18,7 +33,7 @@ export async function GET() {
         });
 
         if (!response.ok) {
-            const errorData = await response.json().catch(() => ({}));
+            const errorData = await readJsonResponse(response).catch(() => ({}));
             console.error('Pteron API error:', response.status, errorData);
             return NextResponse.json(
                 { error: 'Failed to fetch project info', details: errorData },
@@ -26,7 +41,7 @@ export async function GET() {
             );
         }
 
-        const data = await response.json();
+        const data = await readJsonResponse(response);
         // Return only necessary info (balance) if needed, or the whole object.
         // The user asked for balance. Pteron returns Project object.
         return NextResponse.json(data, { status: 200 });

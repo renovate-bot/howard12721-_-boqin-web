@@ -1,6 +1,21 @@
 import { NextResponse } from 'next/server';
 import { headers } from 'next/headers';
 
+const readJsonResponse = async (response: Response) => {
+    const contentType = response.headers.get('content-type') || '';
+
+    if (contentType.includes('application/json')) {
+        return response.json();
+    }
+
+    const body = await response.text();
+    return {
+        message: 'Upstream returned a non-JSON response',
+        contentType,
+        body: body.slice(0, 500),
+    };
+};
+
 export async function POST(request: Request) {
     try {
         const body = await request.json();
@@ -52,7 +67,7 @@ export async function POST(request: Request) {
         });
 
         if (!response.ok) {
-            const errorData = await response.json().catch(() => ({}));
+            const errorData = await readJsonResponse(response).catch(() => ({}));
             console.error('Pteron API error:', response.status, errorData, 'Endpoint:', endpoint);
             return NextResponse.json(
                 { error: 'Failed to create bill', details: errorData },
@@ -60,7 +75,7 @@ export async function POST(request: Request) {
             );
         }
 
-        const data = await response.json();
+        const data = await readJsonResponse(response);
         return NextResponse.json(data, { status: 201 });
 
     } catch (error) {

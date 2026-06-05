@@ -1,12 +1,14 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import styles from './success.module.css';
 
-// eslint-disable-next-line @next/next/no-img-element
 const UserIcon = () => (
-    <img
+    <Image
         src="https://q.trap.jp/api/v3/public/icon/howard127"
         alt="howard127"
         className={styles.icon}
+        width={100}
+        height={100}
     />
 );
 

@@ -1,18 +1,38 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 import styles from './page.module.css';
 
-// eslint-disable-next-line @next/next/no-img-element
 const UserIcon = () => (
-  <img
+  <Image
     src="https://q.trap.jp/api/v3/public/icon/howard127"
     alt="howard127"
     className={styles.icon}
+    width={100}
+    height={100}
   />
 );
 
 const PRESET_AMOUNTS = [100, 500, 1000, 5000];
+
+type ApiError = {
+  error?: string;
+};
+
+const readJson = async <T,>(response: Response): Promise<T> => {
+  const contentType = response.headers.get('content-type') || '';
+
+  if (!contentType.includes('application/json')) {
+    const text = await response.text();
+    const message = text.startsWith('<!DOCTYPE')
+      ? 'API returned HTML instead of JSON'
+      : text || 'API returned a non-JSON response';
+    throw new Error(message);
+  }
+
+  return response.json() as Promise<T>;
+};
 
 export default function Home() {
   const [loading, setLoading] = useState(false);
@@ -24,7 +44,7 @@ export default function Home() {
       try {
         const res = await fetch('/api/me');
         if (res.ok) {
-          const data = await res.json();
+          const data = await readJson<{ balance: number }>(res);
           setBalance(data.balance);
         }
       } catch (e) {
@@ -49,7 +69,7 @@ export default function Home() {
         }),
       });
 
-      const data = await res.json();
+      const data = await readJson<{ paymentUrl?: string } & ApiError>(res);
 
       if (!res.ok) {
         throw new Error(data.error || 'Failed to initiate donation');
@@ -60,8 +80,8 @@ export default function Home() {
       } else {
         throw new Error('No payment URL received');
       }
-    } catch (err: any) {
-      setError(err.message || 'Something went wrong');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Something went wrong');
       setLoading(false);
     }
   };
